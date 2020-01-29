@@ -20,8 +20,10 @@ import boto3
 from botocore.exceptions import ClientError
 import click
 
+from bucket import BucketManager
+
 SESSION = boto3.Session(profile_name='pythonAutomation')
-S3 = SESSION.resource('s3')
+bucket_manager = BucketManager(SESSION)
 
 
 @click.group()
@@ -32,7 +34,7 @@ def cli():
 @cli.command('list-buckets')
 def list_buckets():
     """List all s3 buckets."""
-    for bucket in S3.buckets.all():
+    for bucket in bucket_manager.s3.buckets.all():
         print(bucket)
 
 
@@ -40,7 +42,7 @@ def list_buckets():
 @click.argument('bucket')
 def list_bucket_objects(bucket):
     """List objects in an s3 bucket."""
-    for obj in S3.Bucket(bucket).objects.all():
+    for obj in bucket_manager.s3.Bucket(bucket).objects.all():
         print(obj)
 
 
@@ -49,7 +51,7 @@ def list_bucket_objects(bucket):
 def setup_bucket(bucket):
     """Create and configure s3 bucket."""
     try:
-        s3_bucket = S3.create_bucket(
+        s3_bucket = bucket_manager.s3.create_bucket(
             Bucket=bucket,
             CreateBucketConfiguration={
                 'LocationConstraint': SESSION.region_name
@@ -57,7 +59,7 @@ def setup_bucket(bucket):
         )
     except ClientError as error:
         if error.response['Error']['Code'] == 'BucketAlreadyOwnedByYou':
-            s3_bucket = S3.Bucket(bucket)
+            s3_bucket = bucket_manager.s3.Bucket(bucket)
         else:
             raise error
 
@@ -100,7 +102,7 @@ def upload_file(s3_bucket, path, key):
 @click.argument('bucket')
 def sync(pathname, bucket):
     """Sync contents of PATHNAME to BUCKET."""
-    s3_bucket = S3.Bucket(bucket)
+    s3_bucket = bucket_manager.s3.Bucket(bucket)
     root = Path(pathname).expanduser().resolve()
 
     def handle_directory(target):

@@ -23,7 +23,7 @@ class BucketManager:
         self.s3 = self.session.resource('s3')
         self.transfer_config = boto3.s3.transfer.TransferConfig(
             multipart_chunksize=self.CHUNCK_SIZE,
-            multipart_threshold = self.CHUNCK_SIZE
+            multipart_threshold=self.CHUNCK_SIZE
         )
         self.manifest = {}
 
@@ -33,6 +33,10 @@ class BucketManager:
             get_bucket_location(Bucket=bucket.name)
 
         return bucket_location["LocationConstraint"] or 'us-east-1'
+
+    def get_bucket(self, bucket_name):
+        """Get a bucket by name."""
+        return self.s3.Bucket(bucket_name)
 
     def get_bucket_url(self, bucket):
         """Get the website URL for this bucket."""
@@ -125,7 +129,7 @@ class BucketManager:
 
         if not hashes:
             return
-        elif len(hashes) ==1:
+        elif len(hashes) == 1:
             return '"{}"'.format(hashes[0].hexdigest())
         else:
             hash = self.has_data(
@@ -151,8 +155,8 @@ class BucketManager:
         )
 
     @staticmethod
-    def clear_removed_files(bucket, keys):
-        """Clear files removed from site directory"""
+    def remove_keys(bucket, keys):
+        """Remove objects by key."""
         to_delete = {'Objects': []}
         for key in keys:
             to_delete['Objects'].append({
@@ -186,4 +190,4 @@ class BucketManager:
         handle_directory(root)
 
         if keys_to_remove:
-            self.clear_removed_files(bucket, keys_to_remove)
+            self.remove_keys(bucket, keys_to_remove)

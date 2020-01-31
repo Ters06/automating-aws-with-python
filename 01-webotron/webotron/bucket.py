@@ -9,7 +9,7 @@ from botocore.exceptions import ClientError
 
 from functools import reduce
 from hashlib import md5
-import util
+from webotron import util
 
 
 class BucketManager:
